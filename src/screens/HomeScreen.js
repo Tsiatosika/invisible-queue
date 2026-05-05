@@ -1,21 +1,35 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   View, Text, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, RefreshControl
 } from 'react-native'
 import { useAuth } from '../context/AuthContext'
 import { useQueues } from '../hooks/useQueues'
-import { useLocation } from '../hooks/useLocation'
 import QueueCard from '../components/QueueCard'
+import { supabase } from '../../lib/supabase'
 
 export default function HomeScreen({ navigation }) {
   const { user, signOut } = useAuth()
-  const { queues, loading, fetchQueues } = useQueues()
-  const { location, loading: locLoading, getDistance, isNearby } = useLocation()
+  const { loading, fetchQueues } = useQueues()
+  const [queues, setQueues] = useState([])
+  const [fetching, setFetching] = useState(true)
 
-  const nearbyQueues = location
-    ? queues.filter(q => isNearby(q.latitude, q.longitude, 50000))
-    : queues
+  useEffect(() => {
+    loadQueues()
+  }, [])
+
+  const loadQueues = async () => {
+    setFetching(true)
+    const { data, error } = await supabase
+      .from('queues')
+      .select('*, queue_entries(count)')
+      .order('created_at', { ascending: false })
+
+    if (!error && data) {
+      setQueues(data)
+    }
+    setFetching(false)
+  }
 
   const handleSignOut = async () => {
     await signOut()
@@ -32,17 +46,18 @@ export default function HomeScreen({ navigation }) {
     </View>
   )
 
-  if (locLoading) {
+  if (fetching) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#4f46e5" />
-        <Text style={styles.loadingText}>Chargement...</Text>
+        <Text style={styles.loadingText}>Chargement des files...</Text>
       </View>
     )
   }
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Invisible Queue</Text>
@@ -74,35 +89,30 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
 
+      {/* Compteur */}
       <View style={styles.countBar}>
         <Text style={styles.countText}>
-          📍 {nearbyQueues.length} file{nearbyQueues.length !== 1 ? 's' : ''} disponible{nearbyQueues.length !== 1 ? 's' : ''}
+          📍 {queues.length} file{queues.length !== 1 ? 's' : ''} disponible{queues.length !== 1 ? 's' : ''}
         </Text>
       </View>
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#4f46e5" style={{ marginTop: 40 }} />
-      ) : (
-        <FlatList
-          data={nearbyQueues}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <QueueCard
-              queue={item}
-              distance={location ? getDistance(
-                location.latitude, location.longitude,
-                item.latitude, item.longitude
-              ) : 0}
-              onPress={() => navigation.navigate('QueueDetail', { queue: item })}
-            />
-          )}
-          ListEmptyComponent={renderEmpty}
-          contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={fetchQueues} />
-          }
-        />
-      )}
+      {/* Liste */}
+      <FlatList
+        data={queues}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <QueueCard
+            queue={item}
+            distance={0}
+            onPress={() => navigation.navigate('QueueDetail', { queue: item })}
+          />
+        )}
+        ListEmptyComponent={renderEmpty}
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={fetching} onRefresh={loadQueues} />
+        }
+      />
     </View>
   )
 }
