@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import * as Location from 'expo-location'
 
 export function useLocation() {
   const [location, setLocation] = useState(null)
@@ -7,27 +6,35 @@ export function useLocation() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    (async () => {
-      // Demande la permission de géolocalisation
-      const { status } = await Location.requestForegroundPermissionsAsync()
-      if (status !== 'granted') {
-        setErrorMsg('Permission de géolocalisation refusée')
-        setLoading(false)
-        return
-      }
-
-      // Récupère la position actuelle
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      })
-      setLocation(loc.coords)
+    if (!navigator.geolocation) {
+      setErrorMsg('Géolocalisation non supportée par ce navigateur')
       setLoading(false)
-    })()
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        })
+        setLoading(false)
+      },
+      (error) => {
+        // Si refus ou erreur, on met une position par défaut (Antananarivo)
+        setLocation({
+          latitude: -18.9137,
+          longitude: 47.5361,
+        })
+        setErrorMsg('Position par défaut utilisée (Antananarivo)')
+        setLoading(false)
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
+    )
   }, [])
 
-  // Calcule la distance en mètres entre deux points GPS
   const getDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371000 // rayon de la Terre en mètres
+    const R = 6371000
     const dLat = ((lat2 - lat1) * Math.PI) / 180
     const dLon = ((lon2 - lon1) * Math.PI) / 180
     const a =
@@ -40,7 +47,6 @@ export function useLocation() {
     return R * c
   }
 
-  // Vérifie si l'utilisateur est dans le rayon d'une file (500m par défaut)
   const isNearby = (queueLat, queueLon, radiusMeters = 500) => {
     if (!location) return false
     const distance = getDistance(
