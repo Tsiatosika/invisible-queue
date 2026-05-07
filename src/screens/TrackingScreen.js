@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Modal
+  ActivityIndicator, Modal, Animated
 } from 'react-native'
 import { supabase } from '../../lib/supabase'
+import { useNotifications } from '../hooks/useNotifications'
 
 export default function TrackingScreen({ route, navigation }) {
   const { entry: initialEntry, queue } = route.params
@@ -11,7 +12,19 @@ export default function TrackingScreen({ route, navigation }) {
   const [totalWaiting, setTotalWaiting] = useState(0)
   const [loading, setLoading] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [notification, setNotification] = useState(null)
+  const notifAnim = useRef(new Animated.Value(0)).current
   const channelRef = useRef(null)
+
+  // Notifications internes
+  useNotifications(initialEntry.id, queue.id, (notif) => {
+    setNotification(notif)
+    Animated.sequence([
+      Animated.timing(notifAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.delay(3000),
+      Animated.timing(notifAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start(() => setNotification(null))
+  })
 
   useEffect(() => {
     fetchEntry()
@@ -27,9 +40,7 @@ export default function TrackingScreen({ route, navigation }) {
         event: '*',
         schema: 'public',
         table: 'queue_entries',
-      }, () => {
-        fetchEntry()
-      })
+      }, () => fetchEntry())
       .subscribe()
 
     channelRef.current = channel
@@ -50,7 +61,6 @@ export default function TrackingScreen({ route, navigation }) {
       .maybeSingle()
 
     if (error || !currentEntry) return
-
     setEntry(currentEntry)
 
     const { count } = await supabase
@@ -91,12 +101,19 @@ export default function TrackingScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
 
-      {/* Modal de confirmation personnalisé */}
-      <Modal
-        visible={showConfirm}
-        transparent
-        animationType="fade"
-      >
+      {/* Notification banner */}
+      {notification && (
+        <Animated.View style={[
+          styles.notifBanner,
+          notification.type === 'next' ? styles.notifNext : styles.notifNear,
+          { opacity: notifAnim }
+        ]}>
+          <Text style={styles.notifText}>{notification.message}</Text>
+        </Animated.View>
+      )}
+
+      {/* Modal confirmation */}
+      <Modal visible={showConfirm} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalIcon}>🚪</Text>
@@ -134,7 +151,7 @@ export default function TrackingScreen({ route, navigation }) {
         <Text style={styles.positionValue}>#{entry?.position ?? '—'}</Text>
         {isNext ? (
           <View style={styles.nextBadge}>
-            <Text style={styles.nextText}>🔔 C'est bientôt votre tour !</Text>
+            <Text style={styles.nextText}>🔔 C'est votre tour !</Text>
           </View>
         ) : (
           <Text style={styles.waitingText}>
@@ -161,7 +178,7 @@ export default function TrackingScreen({ route, navigation }) {
         </View>
       </View>
 
-      {/* Live indicator */}
+      {/* Live */}
       <View style={styles.liveIndicator}>
         <View style={styles.liveDot} />
         <Text style={styles.liveText}>Mise à jour en temps réel</Text>
@@ -179,63 +196,47 @@ export default function TrackingScreen({ route, navigation }) {
           <Text style={styles.leaveBtnText}>🚪 Quitter la file</Text>
         )}
       </TouchableOpacity>
-
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
-
-  // Modal
+  notifBanner: {
+    position: 'absolute', top: 0, left: 0, right: 0,
+    zIndex: 100, padding: 16, alignItems: 'center',
+  },
+  notifNear: { backgroundColor: '#f59e0b' },
+  notifNext: { backgroundColor: '#22c55e' },
+  notifText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center', alignItems: 'center',
   },
   modalBox: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 28,
-    width: '80%',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    backgroundColor: '#fff', borderRadius: 20,
+    padding: 28, width: '80%', alignItems: 'center',
   },
   modalIcon: { fontSize: 40, marginBottom: 12 },
-  modalTitle: {
-    fontSize: 20, fontWeight: '800',
-    color: '#1a1a2e', marginBottom: 8,
-  },
-  modalText: {
-    fontSize: 14, color: '#666',
-    textAlign: 'center', lineHeight: 20, marginBottom: 24,
-  },
+  modalTitle: { fontSize: 20, fontWeight: '800', color: '#1a1a2e', marginBottom: 8 },
+  modalText: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 24 },
   modalButtons: { flexDirection: 'row', gap: 12, width: '100%' },
   modalCancel: {
     flex: 1, borderWidth: 1, borderColor: '#ddd',
     borderRadius: 12, padding: 14, alignItems: 'center',
   },
-  modalCancelText: { color: '#666', fontWeight: '600', fontSize: 15 },
+  modalCancelText: { color: '#666', fontWeight: '600' },
   modalConfirm: {
     flex: 1, backgroundColor: '#ef4444',
     borderRadius: 12, padding: 14, alignItems: 'center',
   },
-  modalConfirmText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-
-  // Header
+  modalConfirmText: { color: '#fff', fontWeight: '700' },
   header: {
     backgroundColor: '#4f46e5', padding: 20,
     paddingTop: 40, alignItems: 'center',
   },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
   headerSubtitle: { fontSize: 14, color: '#c7d2fe', marginTop: 4 },
-
-  // Position card
   positionCard: {
     backgroundColor: '#fff', margin: 16, borderRadius: 20,
     padding: 32, alignItems: 'center',
@@ -250,8 +251,6 @@ const styles = StyleSheet.create({
   },
   nextText: { color: '#16a34a', fontWeight: '700', fontSize: 14 },
   waitingText: { color: '#666', fontSize: 16, marginTop: 12 },
-
-  // Info card
   infoCard: {
     backgroundColor: '#fff', marginHorizontal: 16,
     borderRadius: 16, padding: 20,
@@ -264,8 +263,6 @@ const styles = StyleSheet.create({
   },
   infoLabel: { fontSize: 14, color: '#666' },
   infoValue: { fontSize: 14, fontWeight: '600', color: '#1a1a2e' },
-
-  // Live
   liveIndicator: {
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', marginTop: 16,
@@ -275,8 +272,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#22c55e', marginRight: 6,
   },
   liveText: { color: '#22c55e', fontSize: 13, fontWeight: '600' },
-
-  // Leave button
   leaveBtn: {
     margin: 16, marginTop: 24, borderWidth: 2,
     borderColor: '#ef4444', borderRadius: 16,
