@@ -11,6 +11,7 @@ import QueueDetailScreen from './src/screens/QueueDetailScreen'
 import TrackingScreen from './src/screens/TrackingScreen'
 import CreateQueueScreen from './src/screens/CreateQueueScreen'
 import QueueManagerScreen from './src/screens/QueueManagerScreen'
+import NotFoundScreen from './src/screens/NotFoundScreen'
 
 const Stack = createNativeStackNavigator()
 
@@ -26,13 +27,16 @@ function Navigation() {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+    >
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="QueueDetail" component={QueueDetailScreen} />
       <Stack.Screen name="Tracking" component={TrackingScreen} />
       <Stack.Screen name="CreateQueue" component={CreateQueueScreen} />
       <Stack.Screen name="QueueManager" component={QueueManagerScreen} />
+      <Stack.Screen name="NotFound" component={NotFoundScreen} />
     </Stack.Navigator>
   )
 }
