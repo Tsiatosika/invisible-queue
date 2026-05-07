@@ -4,13 +4,11 @@ import {
   StyleSheet, ActivityIndicator, RefreshControl
 } from 'react-native'
 import { useAuth } from '../context/AuthContext'
-import { useQueues } from '../hooks/useQueues'
 import QueueCard from '../components/QueueCard'
 import { supabase } from '../../lib/supabase'
 
 export default function HomeScreen({ navigation }) {
   const { user, signOut } = useAuth()
-  const { loading, fetchQueues } = useQueues()
   const [queues, setQueues] = useState([])
   const [fetching, setFetching] = useState(true)
 
@@ -25,9 +23,7 @@ export default function HomeScreen({ navigation }) {
       .select('*, queue_entries(count)')
       .order('created_at', { ascending: false })
 
-    if (!error && data) {
-      setQueues(data)
-    }
+    if (!error && data) setQueues(data)
     setFetching(false)
   }
 
@@ -35,16 +31,6 @@ export default function HomeScreen({ navigation }) {
     await signOut()
     navigation.reset({ index: 0, routes: [{ name: 'Login' }] })
   }
-
-  const renderEmpty = () => (
-    <View style={styles.empty}>
-      <Text style={styles.emptyIcon}>📍</Text>
-      <Text style={styles.emptyTitle}>Aucune file disponible</Text>
-      <Text style={styles.emptyText}>
-        Aucune file d'attente n'est disponible pour le moment.
-      </Text>
-    </View>
-  )
 
   if (fetching) {
     return (
@@ -57,7 +43,6 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Invisible Queue</Text>
@@ -89,14 +74,12 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Compteur */}
       <View style={styles.countBar}>
         <Text style={styles.countText}>
           📍 {queues.length} file{queues.length !== 1 ? 's' : ''} disponible{queues.length !== 1 ? 's' : ''}
         </Text>
       </View>
 
-      {/* Liste */}
       <FlatList
         data={queues}
         keyExtractor={(item) => item.id}
@@ -105,9 +88,19 @@ export default function HomeScreen({ navigation }) {
             queue={item}
             distance={0}
             onPress={() => navigation.navigate('QueueDetail', { queue: item })}
+            onManage={
+              user && item.created_by === user.id
+                ? () => navigation.navigate('QueueManager', { queue: item })
+                : null
+            }
           />
         )}
-        ListEmptyComponent={renderEmpty}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={styles.emptyIcon}>📍</Text>
+            <Text style={styles.emptyTitle}>Aucune file disponible</Text>
+          </View>
+        }
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl refreshing={fetching} onRefresh={loadQueues} />
@@ -122,43 +115,32 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 12, color: '#666', fontSize: 14 },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 40,
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', padding: 20, paddingTop: 40,
     backgroundColor: '#4f46e5',
   },
   title: { fontSize: 22, fontWeight: 'bold', color: '#fff' },
   subtitle: { fontSize: 12, color: '#c7d2fe', marginTop: 2 },
   headerButtons: { flexDirection: 'row', gap: 8 },
   createBtn: {
-    backgroundColor: '#fff',
-    width: 36, height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#fff', width: 36, height: 36,
+    borderRadius: 18, justifyContent: 'center', alignItems: 'center',
   },
   createBtnText: { color: '#4f46e5', fontSize: 20, fontWeight: 'bold' },
   logoutBtn: {
     backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6,
   },
   logoutText: { color: '#fff', fontSize: 13 },
   loginBtn: {
     backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6,
   },
   loginText: { color: '#4f46e5', fontSize: 13, fontWeight: '600' },
   countBar: { backgroundColor: '#ede9fe', padding: 10, alignItems: 'center' },
   countText: { color: '#4f46e5', fontWeight: '600', fontSize: 13 },
   list: { padding: 16, paddingBottom: 40 },
-  empty: { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
+  empty: { alignItems: 'center', marginTop: 60 },
   emptyIcon: { fontSize: 48, marginBottom: 16 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1a1a2e', marginBottom: 8 },
-  emptyText: { fontSize: 14, color: '#999', textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1a1a2e' },
 })
