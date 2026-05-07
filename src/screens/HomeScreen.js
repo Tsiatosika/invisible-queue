@@ -65,8 +65,8 @@ export default function HomeScreen({ navigation }) {
             </TouchableOpacity>
           )}
           {user ? (
-            <TouchableOpacity style={styles.iconBtn} onPress={handleSignOut}>
-              <Ionicons name="log-out-outline" size={22} color="#4f46e5" />
+            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate("Profile")}>
+              <Ionicons name="person-circle-outline" size={22} color="#4f46e5" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
