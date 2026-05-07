@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, ScrollView
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 
@@ -66,7 +67,10 @@ export default function CreateQueueScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>← Retour</Text>
+          <View style={styles.backContent}>
+            <Ionicons name="arrow-back" size={16} color="#c7d2fe" />
+            <Text style={styles.backText}> Retour</Text>
+          </View>
         </TouchableOpacity>
         <Text style={styles.title}>Créer une file</Text>
         <Text style={styles.subtitle}>Réservé aux utilisateurs connectés</Text>
@@ -86,7 +90,8 @@ export default function CreateQueueScreen({ navigation }) {
         <Text style={styles.label}>Localisation</Text>
 
         <TouchableOpacity style={styles.locationBtn} onPress={useCurrentLocation}>
-          <Text style={styles.locationBtnText}>📍 Utiliser ma position actuelle</Text>
+          <Ionicons name="location-outline" size={18} color="#4f46e5" style={styles.locationIcon} />
+          <Text style={styles.locationBtnText}>Utiliser ma position actuelle</Text>
         </TouchableOpacity>
 
         <Text style={styles.orText}>— ou entrez manuellement —</Text>
@@ -112,7 +117,8 @@ export default function CreateQueueScreen({ navigation }) {
         {/* Erreur */}
         {error ? (
           <View style={styles.errorBox}>
-            <Text style={styles.errorText}>⚠️ {error}</Text>
+            <Ionicons name="warning-outline" size={16} color="#ef4444" style={styles.errorIcon} />
+            <Text style={styles.errorText}>{error}</Text>
           </View>
         ) : null}
 
@@ -125,7 +131,10 @@ export default function CreateQueueScreen({ navigation }) {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.createBtnText}>✅ Créer la file</Text>
+            <View style={styles.createBtnContent}>
+              <Ionicons name="checkmark-circle-outline" size={20} color="#fff" style={styles.createBtnIcon} />
+              <Text style={styles.createBtnText}>Créer la file</Text>
+            </View>
           )}
         </TouchableOpacity>
       </View>
@@ -140,6 +149,7 @@ const styles = StyleSheet.create({
     padding: 20, paddingTop: 40,
   },
   backBtn: { marginBottom: 12 },
+  backContent: { flexDirection: 'row', alignItems: 'center' },
   backText: { color: '#c7d2fe', fontSize: 14 },
   title: { fontSize: 26, fontWeight: 'bold', color: '#fff' },
   subtitle: { fontSize: 13, color: '#c7d2fe', marginTop: 4 },
@@ -161,8 +171,11 @@ const styles = StyleSheet.create({
   locationBtn: {
     backgroundColor: '#ede9fe',
     borderRadius: 12, padding: 14,
-    alignItems: 'center', marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 12,
   },
+  locationIcon: { marginRight: 8 },
   locationBtnText: { color: '#4f46e5', fontWeight: '600', fontSize: 14 },
   orText: {
     textAlign: 'center', color: '#999',
@@ -172,13 +185,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#fee2e2',
     borderRadius: 10, padding: 12,
     marginTop: 12,
+    flexDirection: 'row', alignItems: 'center',
   },
-  errorText: { color: '#ef4444', fontSize: 14 },
+  errorIcon: { marginRight: 8 },
+  errorText: { color: '#ef4444', fontSize: 14, flex: 1 },
   createBtn: {
     backgroundColor: '#4f46e5',
     borderRadius: 14, padding: 18,
     alignItems: 'center', marginTop: 24,
   },
   createBtnDisabled: { backgroundColor: '#a5b4fc' },
+  createBtnContent: { flexDirection: 'row', alignItems: 'center' },
+  createBtnIcon: { marginRight: 8 },
   createBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
 })

@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity,
   FlatList, ActivityIndicator, Modal
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 
 export default function QueueManagerScreen({ route, navigation }) {
@@ -25,9 +26,7 @@ export default function QueueManagerScreen({ route, navigation }) {
     const channel = supabase
       .channel('manager_' + Date.now())
       .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'queue_entries',
+        event: '*', schema: 'public', table: 'queue_entries',
       }, () => fetchEntries())
       .subscribe()
 
@@ -55,94 +54,73 @@ export default function QueueManagerScreen({ route, navigation }) {
 
   const handleServe = async (entry) => {
     setActionLoading(true)
-    try {
-      await supabase
-        .from('queue_entries')
-        .update({ status: 'served' })
-        .eq('id', entry.id)
-      await fetchEntries()
-    } catch (err) {}
+    await supabase.from('queue_entries').update({ status: 'served' }).eq('id', entry.id)
+    await fetchEntries()
     setActionLoading(false)
     setShowModal(false)
   }
 
   const handleMissTurn = async (entry) => {
     setActionLoading(true)
-    try {
-      const newMissed = (entry.missed_turns || 0) + 1
-
-      if (newMissed >= 3) {
-        await supabase
-          .from('queue_entries')
-          .update({ status: 'excluded', missed_turns: newMissed })
-          .eq('id', entry.id)
-      } else {
-        await supabase
-          .from('queue_entries')
-          .update({
-            missed_turns: newMissed,
-            position: entry.position + 3
-          })
-          .eq('id', entry.id)
-      }
-      await fetchEntries()
-    } catch (err) {}
+    const newMissed = (entry.missed_turns || 0) + 1
+    if (newMissed >= 3) {
+      await supabase.from('queue_entries')
+        .update({ status: 'excluded', missed_turns: newMissed })
+        .eq('id', entry.id)
+    } else {
+      await supabase.from('queue_entries')
+        .update({ missed_turns: newMissed, position: entry.position + 3 })
+        .eq('id', entry.id)
+    }
+    await fetchEntries()
     setActionLoading(false)
     setShowModal(false)
   }
 
   const handleRemove = async (entry) => {
     setActionLoading(true)
-    try {
-      await supabase
-        .from('queue_entries')
-        .delete()
-        .eq('id', entry.id)
-      await fetchEntries()
-    } catch (err) {}
+    await supabase.from('queue_entries').delete().eq('id', entry.id)
+    await fetchEntries()
     setActionLoading(false)
     setShowModal(false)
   }
 
-  const openModal = (entry) => {
-    setSelectedEntry(entry)
-    setShowModal(true)
-  }
-
-  const renderEntry = ({ item, index }) => (
-    <TouchableOpacity style={styles.entryCard} onPress={() => openModal(item)}>
+  const renderEntry = ({ item }) => (
+    <TouchableOpacity style={styles.entryCard} onPress={() => { setSelectedEntry(item); setShowModal(true) }}>
       <View style={styles.entryLeft}>
         <View style={styles.positionBadge}>
           <Text style={styles.positionText}>#{item.position}</Text>
         </View>
         <View>
           <Text style={styles.entryName}>
-            {item.guest_name || item.user_id?.substring(0, 8) + '...' || 'Utilisateur'}
+            {item.guest_name || 'Utilisateur connecté'}
           </Text>
           <Text style={styles.entryEmail}>
-            {item.guest_email || 'Compte connecté'}
+            {item.guest_email || 'Compte authentifié'}
           </Text>
           {item.missed_turns > 0 && (
-            <Text style={styles.missedText}>
-              ⚠️ {item.missed_turns} tour{item.missed_turns > 1 ? 's' : ''} manqué{item.missed_turns > 1 ? 's' : ''}
-            </Text>
+            <View style={styles.missedRow}>
+              <Ionicons name="warning-outline" size={12} color="#f59e0b" />
+              <Text style={styles.missedText}>
+                {' '}{item.missed_turns} tour{item.missed_turns > 1 ? 's' : ''} manqué{item.missed_turns > 1 ? 's' : ''}
+              </Text>
+            </View>
           )}
         </View>
       </View>
-      <Text style={styles.actionHint}>Appuyer pour gérer</Text>
+      <Ionicons name="chevron-forward-outline" size={20} color="#c7d2fe" />
     </TouchableOpacity>
   )
 
   return (
     <View style={styles.container}>
 
-      {/* Modal d'actions */}
+      {/* Modal actions */}
       <Modal visible={showModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>
-              Gérer — Position #{selectedEntry?.position}
-            </Text>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Position #{selectedEntry?.position}</Text>
             <Text style={styles.modalName}>
               {selectedEntry?.guest_name || 'Utilisateur connecté'}
             </Text>
@@ -151,37 +129,43 @@ export default function QueueManagerScreen({ route, navigation }) {
             )}
 
             <View style={styles.modalActions}>
-              {/* Servi */}
               <TouchableOpacity
                 style={styles.btnServed}
                 onPress={() => handleServe(selectedEntry)}
                 disabled={actionLoading}
               >
-                {actionLoading ? <ActivityIndicator color="#fff" /> :
-                  <Text style={styles.btnText}>✅ Marquer comme servi</Text>}
+                {actionLoading ? <ActivityIndicator color="#fff" /> : (
+                  <View style={styles.btnInner}>
+                    <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
+                    <Text style={styles.btnText}> Marquer comme servi</Text>
+                  </View>
+                )}
               </TouchableOpacity>
 
-              {/* Tour manqué */}
               <TouchableOpacity
                 style={styles.btnMissed}
                 onPress={() => handleMissTurn(selectedEntry)}
                 disabled={actionLoading}
               >
-                <Text style={styles.btnText}>
-                  ⚠️ Tour manqué ({(selectedEntry?.missed_turns || 0) + 1}/3)
-                </Text>
+                <View style={styles.btnInner}>
+                  <Ionicons name="alert-circle-outline" size={20} color="#fff" />
+                  <Text style={styles.btnText}>
+                    {' '}Tour manqué ({(selectedEntry?.missed_turns || 0) + 1}/3)
+                  </Text>
+                </View>
               </TouchableOpacity>
 
-              {/* Retirer */}
               <TouchableOpacity
                 style={styles.btnRemove}
                 onPress={() => handleRemove(selectedEntry)}
                 disabled={actionLoading}
               >
-                <Text style={styles.btnText}>🗑️ Retirer de la file</Text>
+                <View style={styles.btnInner}>
+                  <Ionicons name="trash-outline" size={20} color="#fff" />
+                  <Text style={styles.btnText}> Retirer de la file</Text>
+                </View>
               </TouchableOpacity>
 
-              {/* Annuler */}
               <TouchableOpacity
                 style={styles.btnCancel}
                 onPress={() => setShowModal(false)}
@@ -196,12 +180,16 @@ export default function QueueManagerScreen({ route, navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>← Retour</Text>
+          <Ionicons name="arrow-back-outline" size={20} color="#c7d2fe" />
+          <Text style={styles.backText}> Retour</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{queue.name}</Text>
-        <Text style={styles.headerSubtitle}>
-          {entries.length} personne{entries.length !== 1 ? 's' : ''} en attente
-        </Text>
+        <View style={styles.countRow}>
+          <Ionicons name="people-outline" size={14} color="#c7d2fe" />
+          <Text style={styles.headerSubtitle}>
+            {' '}{entries.length} personne{entries.length !== 1 ? 's' : ''} en attente
+          </Text>
+        </View>
       </View>
 
       {/* Liste */}
@@ -215,7 +203,7 @@ export default function QueueManagerScreen({ route, navigation }) {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyIcon}>🎉</Text>
+              <Ionicons name="checkmark-done-circle-outline" size={64} color="#22c55e" />
               <Text style={styles.emptyTitle}>File vide !</Text>
               <Text style={styles.emptyText}>Tout le monde a été servi.</Text>
             </View>
@@ -228,78 +216,51 @@ export default function QueueManagerScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
-  header: {
-    backgroundColor: '#4f46e5',
-    padding: 20, paddingTop: 40,
-  },
-  backBtn: { marginBottom: 8 },
+  header: { backgroundColor: '#4f46e5', padding: 20, paddingTop: 40 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   backText: { color: '#c7d2fe', fontSize: 14 },
   headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#fff' },
-  headerSubtitle: { fontSize: 13, color: '#c7d2fe', marginTop: 4 },
+  countRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  headerSubtitle: { fontSize: 13, color: '#c7d2fe' },
   list: { padding: 16 },
   entryCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14, padding: 16,
-    marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4, elevation: 2,
+    backgroundColor: '#fff', borderRadius: 14, padding: 16,
+    marginBottom: 10, flexDirection: 'row',
+    justifyContent: 'space-between', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
   entryLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   positionBadge: {
-    backgroundColor: '#ede9fe',
-    width: 44, height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#ede9fe', width: 44, height: 44,
+    borderRadius: 22, justifyContent: 'center', alignItems: 'center',
   },
   positionText: { color: '#4f46e5', fontWeight: '800', fontSize: 15 },
   entryName: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
   entryEmail: { fontSize: 12, color: '#999', marginTop: 2 },
-  missedText: { fontSize: 12, color: '#f59e0b', marginTop: 2 },
-  actionHint: { fontSize: 11, color: '#c7d2fe' },
+  missedRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  missedText: { fontSize: 12, color: '#f59e0b' },
   empty: { alignItems: 'center', marginTop: 60 },
-  emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1a1a2e' },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1a1a2e', marginTop: 12 },
   emptyText: { fontSize: 14, color: '#999', marginTop: 4 },
-
-  // Modal
-  modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalBox: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 24, paddingBottom: 40,
+    backgroundColor: '#fff', borderTopLeftRadius: 24,
+    borderTopRightRadius: 24, padding: 24, paddingBottom: 40,
   },
-  modalTitle: {
-    fontSize: 16, fontWeight: '700',
-    color: '#1a1a2e', marginBottom: 4,
+  modalHandle: {
+    width: 40, height: 4, backgroundColor: '#e5e7eb',
+    borderRadius: 2, alignSelf: 'center', marginBottom: 16,
   },
-  modalName: { fontSize: 18, fontWeight: '800', color: '#4f46e5' },
-  modalEmail: { fontSize: 13, color: '#999', marginBottom: 20 },
+  modalTitle: { fontSize: 14, color: '#999', marginBottom: 4 },
+  modalName: { fontSize: 20, fontWeight: '800', color: '#4f46e5' },
+  modalEmail: { fontSize: 13, color: '#999', marginBottom: 8 },
   modalActions: { gap: 10, marginTop: 16 },
-  btnServed: {
-    backgroundColor: '#22c55e',
-    borderRadius: 12, padding: 16, alignItems: 'center',
-  },
-  btnMissed: {
-    backgroundColor: '#f59e0b',
-    borderRadius: 12, padding: 16, alignItems: 'center',
-  },
-  btnRemove: {
-    backgroundColor: '#ef4444',
-    borderRadius: 12, padding: 16, alignItems: 'center',
-  },
+  btnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  btnServed: { backgroundColor: '#22c55e', borderRadius: 12, padding: 16, alignItems: 'center' },
+  btnMissed: { backgroundColor: '#f59e0b', borderRadius: 12, padding: 16, alignItems: 'center' },
+  btnRemove: { backgroundColor: '#ef4444', borderRadius: 12, padding: 16, alignItems: 'center' },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  btnCancel: {
-    borderWidth: 1, borderColor: '#ddd',
-    borderRadius: 12, padding: 16, alignItems: 'center',
-  },
+  btnCancel: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 16, alignItems: 'center' },
   btnCancelText: { color: '#666', fontWeight: '600', fontSize: 15 },
 })

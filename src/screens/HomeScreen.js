@@ -3,6 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, RefreshControl
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../context/AuthContext'
 import QueueCard from '../components/QueueCard'
 import { supabase } from '../../lib/supabase'
@@ -12,9 +13,7 @@ export default function HomeScreen({ navigation }) {
   const [queues, setQueues] = useState([])
   const [fetching, setFetching] = useState(true)
 
-  useEffect(() => {
-    loadQueues()
-  }, [])
+  useEffect(() => { loadQueues() }, [])
 
   const loadQueues = async () => {
     setFetching(true)
@@ -22,7 +21,6 @@ export default function HomeScreen({ navigation }) {
       .from('queues')
       .select('*, queue_entries(count)')
       .order('created_at', { ascending: false })
-
     if (!error && data) setQueues(data)
     setFetching(false)
   }
@@ -36,50 +34,61 @@ export default function HomeScreen({ navigation }) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#4f46e5" />
-        <Text style={styles.loadingText}>Chargement des files...</Text>
+        <Text style={styles.loadingText}>Chargement...</Text>
       </View>
     )
   }
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Invisible Queue</Text>
-          <Text style={styles.subtitle}>
-            {user ? `👤 ${user.email}` : '👤 Mode invité'}
-          </Text>
+          <View style={styles.userRow}>
+            <Ionicons
+              name={user ? 'person-circle-outline' : 'person-outline'}
+              size={14} color="#c7d2fe"
+            />
+            <Text style={styles.subtitle}>
+              {' '}{user ? user.email : 'Mode invité'}
+            </Text>
+          </View>
         </View>
         <View style={styles.headerButtons}>
           {user && (
             <TouchableOpacity
-              style={styles.createBtn}
+              style={styles.iconBtn}
               onPress={() => navigation.navigate('CreateQueue')}
             >
-              <Text style={styles.createBtnText}>＋</Text>
+              <Ionicons name="add" size={24} color="#4f46e5" />
             </TouchableOpacity>
           )}
           {user ? (
-            <TouchableOpacity style={styles.logoutBtn} onPress={handleSignOut}>
-              <Text style={styles.logoutText}>Déco</Text>
+            <TouchableOpacity style={styles.iconBtn} onPress={handleSignOut}>
+              <Ionicons name="log-out-outline" size={22} color="#4f46e5" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
               style={styles.loginBtn}
               onPress={() => navigation.navigate('Login')}
             >
-              <Text style={styles.loginText}>Connexion</Text>
+              <Ionicons name="log-in-outline" size={16} color="#4f46e5" />
+              <Text style={styles.loginText}> Connexion</Text>
             </TouchableOpacity>
           )}
         </View>
       </View>
 
+      {/* Compteur */}
       <View style={styles.countBar}>
+        <Ionicons name="list-outline" size={14} color="#4f46e5" />
         <Text style={styles.countText}>
-          📍 {queues.length} file{queues.length !== 1 ? 's' : ''} disponible{queues.length !== 1 ? 's' : ''}
+          {' '}{queues.length} file{queues.length !== 1 ? 's' : ''} disponible{queues.length !== 1 ? 's' : ''}
         </Text>
       </View>
 
+      {/* Liste */}
       <FlatList
         data={queues}
         keyExtractor={(item) => item.id}
@@ -97,8 +106,11 @@ export default function HomeScreen({ navigation }) {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>📍</Text>
+            <Ionicons name="location-outline" size={64} color="#c7d2fe" />
             <Text style={styles.emptyTitle}>Aucune file disponible</Text>
+            <Text style={styles.emptyText}>
+              Aucune file d'attente n'est disponible pour le moment.
+            </Text>
           </View>
         }
         contentContainerStyle={styles.list}
@@ -120,27 +132,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#4f46e5',
   },
   title: { fontSize: 22, fontWeight: 'bold', color: '#fff' },
-  subtitle: { fontSize: 12, color: '#c7d2fe', marginTop: 2 },
-  headerButtons: { flexDirection: 'row', gap: 8 },
-  createBtn: {
-    backgroundColor: '#fff', width: 36, height: 36,
-    borderRadius: 18, justifyContent: 'center', alignItems: 'center',
-  },
-  createBtnText: { color: '#4f46e5', fontSize: 20, fontWeight: 'bold' },
-  logoutBtn: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6,
-  },
-  logoutText: { color: '#fff', fontSize: 13 },
-  loginBtn: {
+  userRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  subtitle: { fontSize: 12, color: '#c7d2fe' },
+  headerButtons: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  iconBtn: {
     backgroundColor: '#fff',
-    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6,
+    width: 38, height: 38, borderRadius: 19,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  loginBtn: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 8,
   },
   loginText: { color: '#4f46e5', fontSize: 13, fontWeight: '600' },
-  countBar: { backgroundColor: '#ede9fe', padding: 10, alignItems: 'center' },
+  countBar: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ede9fe', padding: 10,
+  },
   countText: { color: '#4f46e5', fontWeight: '600', fontSize: 13 },
   list: { padding: 16, paddingBottom: 40 },
-  empty: { alignItems: 'center', marginTop: 60 },
-  emptyIcon: { fontSize: 48, marginBottom: 16 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1a1a2e' },
+  empty: { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1a1a2e', marginTop: 16 },
+  emptyText: { fontSize: 14, color: '#999', textAlign: 'center', marginTop: 8, lineHeight: 20 },
 })

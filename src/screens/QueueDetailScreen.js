@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, ScrollView, Modal
+  ActivityIndicator, ScrollView
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import GuestForm from '../components/GuestForm'
@@ -101,7 +102,10 @@ export default function QueueDetailScreen({ route, navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>← Retour</Text>
+          <View style={styles.backContent}>
+            <Ionicons name="arrow-back" size={16} color="#c7d2fe" />
+            <Text style={styles.backText}> Retour</Text>
+          </View>
         </TouchableOpacity>
         <Text style={styles.title}>{queue.name}</Text>
         <View style={styles.liveBadge}>
@@ -115,17 +119,26 @@ export default function QueueDetailScreen({ route, navigation }) {
         <View style={styles.statRow}>
           <View style={styles.stat}>
             <Text style={styles.statValue}>{entryCount}</Text>
-            <Text style={styles.statLabel}>👥 En attente</Text>
+            <View style={styles.statLabelRow}>
+              <Ionicons name="people-outline" size={13} color="#999" style={styles.statIcon} />
+              <Text style={styles.statLabel}>En attente</Text>
+            </View>
           </View>
           <View style={styles.divider} />
           <View style={styles.stat}>
             <Text style={styles.statValue}>~{waitMinutes} min</Text>
-            <Text style={styles.statLabel}>⏱️ Temps estimé</Text>
+            <View style={styles.statLabelRow}>
+              <Ionicons name="time-outline" size={13} color="#999" style={styles.statIcon} />
+              <Text style={styles.statLabel}>Temps estimé</Text>
+            </View>
           </View>
           <View style={styles.divider} />
           <View style={styles.stat}>
             <Text style={styles.statValue}>#{entryCount + 1}</Text>
-            <Text style={styles.statLabel}>📍 Votre position</Text>
+            <View style={styles.statLabelRow}>
+              <Ionicons name="location-outline" size={13} color="#999" style={styles.statIcon} />
+              <Text style={styles.statLabel}>Votre position</Text>
+            </View>
           </View>
         </View>
       </View>
@@ -133,13 +146,19 @@ export default function QueueDetailScreen({ route, navigation }) {
       {/* Info utilisateur */}
       <View style={styles.infoBox}>
         {user ? (
-          <Text style={styles.infoText}>
-            ✅ Connecté en tant que <Text style={styles.infoEmail}>{user.email}</Text>
-          </Text>
+          <View style={styles.infoRow}>
+            <Ionicons name="checkmark-circle-outline" size={16} color="#4f46e5" style={styles.infoIcon} />
+            <Text style={styles.infoText}>
+              Connecté en tant que <Text style={styles.infoEmail}>{user.email}</Text>
+            </Text>
+          </View>
         ) : (
-          <Text style={styles.infoText}>
-            👤 Mode invité — vos informations seront demandées
-          </Text>
+          <View style={styles.infoRow}>
+            <Ionicons name="person-outline" size={16} color="#4f46e5" style={styles.infoIcon} />
+            <Text style={styles.infoText}>
+              Mode invité — vos informations seront demandées
+            </Text>
+          </View>
         )}
       </View>
 
@@ -153,9 +172,15 @@ export default function QueueDetailScreen({ route, navigation }) {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.joinBtnText}>
-              {user ? '✅ Rejoindre la file' : '👤 Rejoindre en invité'}
-            </Text>
+            <View style={styles.joinBtnContent}>
+              <Ionicons
+                name={user ? 'checkmark-circle-outline' : 'person-outline'}
+                size={20} color="#fff" style={styles.joinBtnIcon}
+              />
+              <Text style={styles.joinBtnText}>
+                {user ? 'Rejoindre la file' : 'Rejoindre en invité'}
+              </Text>
+            </View>
           )}
         </TouchableOpacity>
       ) : (
@@ -183,6 +208,7 @@ const styles = StyleSheet.create({
     padding: 20, paddingTop: 40,
   },
   backBtn: { marginBottom: 12 },
+  backContent: { flexDirection: 'row', alignItems: 'center' },
   backText: { color: '#c7d2fe', fontSize: 14 },
   title: { fontSize: 26, fontWeight: 'bold', color: '#fff', marginBottom: 8 },
   liveBadge: {
@@ -208,13 +234,17 @@ const styles = StyleSheet.create({
   },
   stat: { alignItems: 'center', flex: 1 },
   statValue: { fontSize: 22, fontWeight: '800', color: '#4f46e5', marginBottom: 4 },
+  statLabelRow: { flexDirection: 'row', alignItems: 'center' },
+  statIcon: { marginRight: 4 },
   statLabel: { fontSize: 12, color: '#999', textAlign: 'center' },
   divider: { width: 1, height: 40, backgroundColor: '#eee' },
   infoBox: {
     backgroundColor: '#ede9fe',
     marginHorizontal: 16, borderRadius: 12, padding: 14,
   },
-  infoText: { color: '#4f46e5', fontSize: 14 },
+  infoRow: { flexDirection: 'row', alignItems: 'center' },
+  infoIcon: { marginRight: 8 },
+  infoText: { color: '#4f46e5', fontSize: 14, flex: 1 },
   infoEmail: { fontWeight: '700' },
   joinBtn: {
     backgroundColor: '#4f46e5',
@@ -222,6 +252,8 @@ const styles = StyleSheet.create({
     padding: 18, alignItems: 'center',
   },
   joinBtnDisabled: { backgroundColor: '#a5b4fc' },
+  joinBtnContent: { flexDirection: 'row', alignItems: 'center' },
+  joinBtnIcon: { marginRight: 8 },
   joinBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   loginHint: { alignItems: 'center', marginBottom: 24 },
   loginHintText: { color: '#999', fontSize: 13 },

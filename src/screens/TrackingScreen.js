@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity,
   ActivityIndicator, Modal, Animated
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useNotifications } from '../hooks/useNotifications'
 
@@ -16,15 +17,16 @@ export default function TrackingScreen({ route, navigation }) {
   const notifAnim = useRef(new Animated.Value(0)).current
   const channelRef = useRef(null)
 
-  // Notifications internes
-  useNotifications(initialEntry.id, queue.id, (notif) => {
+  const showNotification = (notif) => {
     setNotification(notif)
     Animated.sequence([
       Animated.timing(notifAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
-      Animated.delay(3000),
+      Animated.delay(4000),
       Animated.timing(notifAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
     ]).start(() => setNotification(null))
-  })
+  }
+
+  useNotifications(initialEntry.id, queue.id, showNotification)
 
   useEffect(() => {
     fetchEntry()
@@ -37,9 +39,7 @@ export default function TrackingScreen({ route, navigation }) {
     const channel = supabase
       .channel('tracking_' + Date.now())
       .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'queue_entries',
+        event: '*', schema: 'public', table: 'queue_entries',
       }, () => fetchEntry())
       .subscribe()
 
@@ -106,9 +106,15 @@ export default function TrackingScreen({ route, navigation }) {
         <Animated.View style={[
           styles.notifBanner,
           notification.type === 'next' ? styles.notifNext : styles.notifNear,
-          { opacity: notifAnim }
+          { opacity: notifAnim, transform: [{ translateY: notifAnim.interpolate({
+            inputRange: [0, 1], outputRange: [-60, 0]
+          })}]}
         ]}>
-          <Text style={styles.notifText}>{notification.message}</Text>
+          <Ionicons
+            name={notification.type === 'next' ? 'notifications' : 'alarm-outline'}
+            size={18} color="#fff"
+          />
+          <Text style={styles.notifText}> {notification.message}</Text>
         </Animated.View>
       )}
 
@@ -116,7 +122,7 @@ export default function TrackingScreen({ route, navigation }) {
       <Modal visible={showConfirm} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalIcon}>🚪</Text>
+            <Ionicons name="exit-outline" size={48} color="#ef4444" />
             <Text style={styles.modalTitle}>Quitter la file ?</Text>
             <Text style={styles.modalText}>
               Votre place sera libérée et vous perdrez votre position.
@@ -141,6 +147,7 @@ export default function TrackingScreen({ route, navigation }) {
 
       {/* Header */}
       <View style={styles.header}>
+        <Ionicons name="timer-outline" size={28} color="#fff" style={{ marginBottom: 4 }} />
         <Text style={styles.headerTitle}>Suivi de file</Text>
         <Text style={styles.headerSubtitle}>{queue.name}</Text>
       </View>
@@ -151,30 +158,43 @@ export default function TrackingScreen({ route, navigation }) {
         <Text style={styles.positionValue}>#{entry?.position ?? '—'}</Text>
         {isNext ? (
           <View style={styles.nextBadge}>
-            <Text style={styles.nextText}>🔔 C'est votre tour !</Text>
+            <Ionicons name="checkmark-circle" size={16} color="#16a34a" />
+            <Text style={styles.nextText}> C'est votre tour !</Text>
           </View>
         ) : (
-          <Text style={styles.waitingText}>
-            {totalWaiting} personne{totalWaiting > 1 ? 's' : ''} devant vous
-          </Text>
+          <View style={styles.waitingRow}>
+            <Ionicons name="people-outline" size={16} color="#666" />
+            <Text style={styles.waitingText}>
+              {' '}{totalWaiting} personne{totalWaiting > 1 ? 's' : ''} devant vous
+            </Text>
+          </View>
         )}
       </View>
 
       {/* Infos */}
       <View style={styles.infoCard}>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>⏱️ Temps estimé</Text>
+          <View style={styles.infoLeft}>
+            <Ionicons name="time-outline" size={18} color="#4f46e5" />
+            <Text style={styles.infoLabel}> Temps estimé</Text>
+          </View>
           <Text style={styles.infoValue}>~{(totalWaiting + 1) * 5} min</Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>⚠️ Tours manqués</Text>
+          <View style={styles.infoLeft}>
+            <Ionicons name="warning-outline" size={18} color={missedTurns > 0 ? '#ef4444' : '#4f46e5'} />
+            <Text style={styles.infoLabel}> Tours manqués</Text>
+          </View>
           <Text style={[styles.infoValue, missedTurns > 0 && { color: '#ef4444' }]}>
             {missedTurns} / 3
           </Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>📊 Statut</Text>
-          <Text style={styles.infoValue}>⏳ En attente</Text>
+          <View style={styles.infoLeft}>
+            <Ionicons name="pulse-outline" size={18} color="#4f46e5" />
+            <Text style={styles.infoLabel}> Statut</Text>
+          </View>
+          <Text style={styles.infoValue}>En attente</Text>
         </View>
       </View>
 
@@ -183,6 +203,18 @@ export default function TrackingScreen({ route, navigation }) {
         <View style={styles.liveDot} />
         <Text style={styles.liveText}>Mise à jour en temps réel</Text>
       </View>
+
+      {/* Bouton test */}
+      <TouchableOpacity
+        style={styles.testBtn}
+        onPress={() => showNotification({
+          type: 'near',
+          message: 'Plus que 2 personnes avant vous !'
+        })}
+      >
+        <Ionicons name="notifications-outline" size={16} color="#4f46e5" />
+        <Text style={styles.testBtnText}> Tester la notification</Text>
+      </TouchableOpacity>
 
       {/* Bouton quitter */}
       <TouchableOpacity
@@ -193,7 +225,10 @@ export default function TrackingScreen({ route, navigation }) {
         {loading ? (
           <ActivityIndicator color="#ef4444" />
         ) : (
-          <Text style={styles.leaveBtnText}>🚪 Quitter la file</Text>
+          <>
+            <Ionicons name="exit-outline" size={20} color="#ef4444" />
+            <Text style={styles.leaveBtnText}> Quitter la file</Text>
+          </>
         )}
       </TouchableOpacity>
     </View>
@@ -204,11 +239,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
   notifBanner: {
     position: 'absolute', top: 0, left: 0, right: 0,
-    zIndex: 100, padding: 16, alignItems: 'center',
+    zIndex: 100, padding: 18,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
   },
   notifNear: { backgroundColor: '#f59e0b' },
   notifNext: { backgroundColor: '#22c55e' },
-  notifText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  notifText: { color: '#fff', fontWeight: '800', fontSize: 14 },
   modalOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center', alignItems: 'center',
@@ -217,8 +253,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', borderRadius: 20,
     padding: 28, width: '80%', alignItems: 'center',
   },
-  modalIcon: { fontSize: 40, marginBottom: 12 },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: '#1a1a2e', marginBottom: 8 },
+  modalTitle: { fontSize: 20, fontWeight: '800', color: '#1a1a2e', marginTop: 12, marginBottom: 8 },
   modalText: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 24 },
   modalButtons: { flexDirection: 'row', gap: 12, width: '100%' },
   modalCancel: {
@@ -246,11 +281,13 @@ const styles = StyleSheet.create({
   positionLabel: { fontSize: 14, color: '#999', marginBottom: 8 },
   positionValue: { fontSize: 72, fontWeight: '900', color: '#4f46e5' },
   nextBadge: {
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#dcfce7', borderRadius: 20,
     paddingHorizontal: 16, paddingVertical: 8, marginTop: 12,
   },
   nextText: { color: '#16a34a', fontWeight: '700', fontSize: 14 },
-  waitingText: { color: '#666', fontSize: 16, marginTop: 12 },
+  waitingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
+  waitingText: { color: '#666', fontSize: 15 },
   infoCard: {
     backgroundColor: '#fff', marginHorizontal: 16,
     borderRadius: 16, padding: 20,
@@ -259,10 +296,12 @@ const styles = StyleSheet.create({
   },
   infoRow: {
     flexDirection: 'row', justifyContent: 'space-between',
-    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f3f4f6',
+    alignItems: 'center', paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: '#f3f4f6',
   },
+  infoLeft: { flexDirection: 'row', alignItems: 'center' },
   infoLabel: { fontSize: 14, color: '#666' },
-  infoValue: { fontSize: 14, fontWeight: '600', color: '#1a1a2e' },
+  infoValue: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
   liveIndicator: {
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', marginTop: 16,
@@ -272,10 +311,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#22c55e', marginRight: 6,
   },
   liveText: { color: '#22c55e', fontSize: 13, fontWeight: '600' },
+  testBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    marginHorizontal: 16, marginTop: 16,
+    backgroundColor: '#ede9fe', borderRadius: 12, padding: 14,
+  },
+  testBtnText: { color: '#4f46e5', fontWeight: '600', fontSize: 14 },
   leaveBtn: {
-    margin: 16, marginTop: 24, borderWidth: 2,
-    borderColor: '#ef4444', borderRadius: 16,
-    padding: 16, alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    margin: 16, marginTop: 12, borderWidth: 2,
+    borderColor: '#ef4444', borderRadius: 16, padding: 16,
   },
   leaveBtnDisabled: { opacity: 0.5 },
   leaveBtnText: { color: '#ef4444', fontSize: 16, fontWeight: '700' },
