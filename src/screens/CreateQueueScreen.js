@@ -5,10 +5,12 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { supabase } from '../../lib/supabase'
 
 export default function CreateQueueScreen({ navigation }) {
   const { user } = useAuth()
+  const { theme } = useTheme()
   const [name, setName] = useState('')
   const [latitude, setLatitude] = useState('-18.9137')
   const [longitude, setLongitude] = useState('47.5361')
@@ -16,30 +18,18 @@ export default function CreateQueueScreen({ navigation }) {
   const [error, setError] = useState('')
 
   const handleCreate = async () => {
-    if (!name.trim()) {
-      setError('Le nom de la file est obligatoire')
-      return
-    }
-    if (!latitude || !longitude) {
-      setError('Les coordonnées sont obligatoires')
-      return
-    }
-
+    if (!name.trim()) { setError('Le nom de la file est obligatoire'); return }
+    if (!latitude || !longitude) { setError('Les coordonnées sont obligatoires'); return }
     setError('')
     setLoading(true)
-
     try {
-      const { error: err } = await supabase
-        .from('queues')
-        .insert({
-          name: name.trim(),
-          latitude: parseFloat(latitude),
-          longitude: parseFloat(longitude),
-          created_by: user.id,
-        })
-
+      const { error: err } = await supabase.from('queues').insert({
+        name: name.trim(),
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        created_by: user.id,
+      })
       if (err) throw err
-
       navigation.reset({ index: 0, routes: [{ name: 'Home' }] })
     } catch (err) {
       setError(err.message)
@@ -49,10 +39,7 @@ export default function CreateQueueScreen({ navigation }) {
   }
 
   const useCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      setError('Géolocalisation non disponible')
-      return
-    }
+    if (!navigator.geolocation) { setError('Géolocalisation non disponible'); return }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLatitude(pos.coords.latitude.toString())
@@ -63,68 +50,66 @@ export default function CreateQueueScreen({ navigation }) {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.bg }]}>
+      <View style={[styles.header, { backgroundColor: theme.header }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <View style={styles.backContent}>
-            <Ionicons name="arrow-back" size={16} color="#c7d2fe" />
-            <Text style={styles.backText}> Retour</Text>
+            <Ionicons name="arrow-back" size={16} color={theme.headerSub} />
+            <Text style={[styles.backText, { color: theme.headerSub }]}> Retour</Text>
           </View>
         </TouchableOpacity>
-        <Text style={styles.title}>Créer une file</Text>
-        <Text style={styles.subtitle}>Réservé aux utilisateurs connectés</Text>
+        <Text style={[styles.title, { color: theme.headerText }]}>Créer une file</Text>
+        <Text style={[styles.subtitle, { color: theme.headerSub }]}>Réservé aux utilisateurs connectés</Text>
       </View>
 
       <View style={styles.form}>
-        {/* Nom */}
-        <Text style={styles.label}>Nom de la file *</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Nom de la file *</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.card, borderColor: theme.border, color: theme.text }]}
           placeholder="Ex: File Pharmacie Centrale"
+          placeholderTextColor={theme.placeholder}
           value={name}
           onChangeText={setName}
         />
 
-        {/* Localisation */}
-        <Text style={styles.label}>Localisation</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Localisation</Text>
 
-        <TouchableOpacity style={styles.locationBtn} onPress={useCurrentLocation}>
-          <Ionicons name="location-outline" size={18} color="#4f46e5" style={styles.locationIcon} />
-          <Text style={styles.locationBtnText}>Utiliser ma position actuelle</Text>
+        <TouchableOpacity style={[styles.locationBtn, { backgroundColor: theme.badge }]} onPress={useCurrentLocation}>
+          <Ionicons name="location-outline" size={18} color={theme.iconColor} style={styles.locationIcon} />
+          <Text style={[styles.locationBtnText, { color: theme.countText }]}>Utiliser ma position actuelle</Text>
         </TouchableOpacity>
 
-        <Text style={styles.orText}>— ou entrez manuellement —</Text>
+        <Text style={[styles.orText, { color: theme.placeholder }]}>— ou entrez manuellement —</Text>
 
-        <Text style={styles.sublabel}>Latitude</Text>
+        <Text style={[styles.sublabel, { color: theme.subtext }]}>Latitude</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.card, borderColor: theme.border, color: theme.text }]}
           placeholder="-18.9137"
+          placeholderTextColor={theme.placeholder}
           value={latitude}
           onChangeText={setLatitude}
           keyboardType="numeric"
         />
 
-        <Text style={styles.sublabel}>Longitude</Text>
+        <Text style={[styles.sublabel, { color: theme.subtext }]}>Longitude</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.card, borderColor: theme.border, color: theme.text }]}
           placeholder="47.5361"
+          placeholderTextColor={theme.placeholder}
           value={longitude}
           onChangeText={setLongitude}
           keyboardType="numeric"
         />
 
-        {/* Erreur */}
         {error ? (
           <View style={styles.errorBox}>
-            <Ionicons name="warning-outline" size={16} color="#ef4444" style={styles.errorIcon} />
-            <Text style={styles.errorText}>{error}</Text>
+            <Ionicons name="warning-outline" size={16} color={theme.danger} style={styles.errorIcon} />
+            <Text style={[styles.errorText, { color: theme.danger }]}>{error}</Text>
           </View>
         ) : null}
 
-        {/* Bouton créer */}
         <TouchableOpacity
-          style={[styles.createBtn, (!name || loading) && styles.createBtnDisabled]}
+          style={[styles.createBtn, { backgroundColor: theme.header }, (!name || loading) && { backgroundColor: theme.headerSub }]}
           onPress={handleCreate}
           disabled={!name || loading}
         >
@@ -143,58 +128,25 @@ export default function CreateQueueScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
-  header: {
-    backgroundColor: '#4f46e5',
-    padding: 20, paddingTop: 40,
-  },
+  container: { flex: 1 },
+  header: { padding: 20, paddingTop: 40 },
   backBtn: { marginBottom: 12 },
   backContent: { flexDirection: 'row', alignItems: 'center' },
-  backText: { color: '#c7d2fe', fontSize: 14 },
-  title: { fontSize: 26, fontWeight: 'bold', color: '#fff' },
-  subtitle: { fontSize: 13, color: '#c7d2fe', marginTop: 4 },
+  backText: { fontSize: 14 },
+  title: { fontSize: 26, fontWeight: 'bold' },
+  subtitle: { fontSize: 13, marginTop: 4 },
   form: { padding: 20 },
-  label: {
-    fontSize: 15, fontWeight: '700',
-    color: '#1a1a2e', marginBottom: 8, marginTop: 16,
-  },
-  sublabel: {
-    fontSize: 13, color: '#666',
-    marginBottom: 6, marginTop: 8,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1, borderColor: '#ddd',
-    borderRadius: 12, padding: 14,
-    fontSize: 15, marginBottom: 4,
-  },
-  locationBtn: {
-    backgroundColor: '#ede9fe',
-    borderRadius: 12, padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 12,
-  },
+  label: { fontSize: 15, fontWeight: '700', marginBottom: 8, marginTop: 16 },
+  sublabel: { fontSize: 13, marginBottom: 6, marginTop: 8 },
+  input: { borderWidth: 1, borderRadius: 12, padding: 14, fontSize: 15, marginBottom: 4 },
+  locationBtn: { borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   locationIcon: { marginRight: 8 },
-  locationBtnText: { color: '#4f46e5', fontWeight: '600', fontSize: 14 },
-  orText: {
-    textAlign: 'center', color: '#999',
-    fontSize: 13, marginVertical: 8,
-  },
-  errorBox: {
-    backgroundColor: '#fee2e2',
-    borderRadius: 10, padding: 12,
-    marginTop: 12,
-    flexDirection: 'row', alignItems: 'center',
-  },
+  locationBtnText: { fontWeight: '600', fontSize: 14 },
+  orText: { textAlign: 'center', fontSize: 13, marginVertical: 8 },
+  errorBox: { backgroundColor: '#fee2e2', borderRadius: 10, padding: 12, marginTop: 12, flexDirection: 'row', alignItems: 'center' },
   errorIcon: { marginRight: 8 },
-  errorText: { color: '#ef4444', fontSize: 14, flex: 1 },
-  createBtn: {
-    backgroundColor: '#4f46e5',
-    borderRadius: 14, padding: 18,
-    alignItems: 'center', marginTop: 24,
-  },
-  createBtnDisabled: { backgroundColor: '#a5b4fc' },
+  errorText: { fontSize: 14, flex: 1 },
+  createBtn: { borderRadius: 14, padding: 18, alignItems: 'center', marginTop: 24 },
   createBtnContent: { flexDirection: 'row', alignItems: 'center' },
   createBtnIcon: { marginRight: 8 },
   createBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },

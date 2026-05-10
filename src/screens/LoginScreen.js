@@ -4,18 +4,18 @@ import {
   StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform
 } from 'react-native'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 export default function LoginScreen({ navigation }) {
   const { signIn, signUp, user } = useAuth()
+  const { theme, isDark, toggleTheme } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (user) {
-      navigation.reset({ index: 0, routes: [{ name: 'Home' }] })
-    }
+    if (user) navigation.reset({ index: 0, routes: [{ name: 'Home' }] })
   }, [user])
 
   const handleSubmit = async () => {
@@ -41,31 +41,38 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <Text style={styles.title}>Invisible Queue</Text>
-      <Text style={styles.subtitle}>
+    
+      <Text style={[styles.title, { color: theme.text }]}>Invisible Queue</Text>
+      <Text style={[styles.subtitle, { color: theme.subtext }]}>
         {isLogin ? 'Connexion' : 'Créer un compte'}
       </Text>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
         placeholder="Email"
+        placeholderTextColor={theme.placeholder}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
         placeholder="Mot de passe"
+        placeholderTextColor={theme.placeholder}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: theme.header }]}
+        onPress={handleSubmit}
+        disabled={loading}
+      >
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
@@ -76,38 +83,41 @@ export default function LoginScreen({ navigation }) {
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
-        <Text style={styles.switchText}>
+        <Text style={[styles.switchText, { color: theme.countText }]}>
           {isLogin ? "Pas de compte ? S'inscrire" : 'Déjà un compte ? Se connecter'}
         </Text>
       </TouchableOpacity>
 
       <View style={styles.divider}>
-        <View style={styles.line} />
-        <Text style={styles.orText}>OU</Text>
-        <View style={styles.line} />
+        <View style={[styles.line, { backgroundColor: theme.border }]} />
+        <Text style={[styles.orText, { color: theme.placeholder }]}>OU</Text>
+        <View style={[styles.line, { backgroundColor: theme.border }]} />
       </View>
 
       <TouchableOpacity
-        style={styles.guestButton}
+        style={[styles.guestButton, { borderColor: theme.countText }]}
         onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
       >
-        <Text style={styles.guestButtonText}>Continuer en tant qu'invité</Text>
+        <Text style={[styles.guestButtonText, { color: theme.countText }]}>
+          Continuer en tant qu'invité
+        </Text>
       </TouchableOpacity>
     </KeyboardAvoidingView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#f8f9fa' },
-  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', color: '#1a1a2e', marginBottom: 8 },
-  subtitle: { fontSize: 16, textAlign: 'center', color: '#666', marginBottom: 32 },
-  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 16, marginBottom: 16, fontSize: 16 },
-  button: { backgroundColor: '#4f46e5', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 16 },
+  container: { flex: 1, justifyContent: 'center', padding: 24 },
+  themeToggle: { position: 'absolute', top: 52, right: 24 },
+  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 8 },
+  subtitle: { fontSize: 16, textAlign: 'center', marginBottom: 32 },
+  input: { borderWidth: 1, borderRadius: 12, padding: 16, marginBottom: 16, fontSize: 16 },
+  button: { borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 16 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  switchText: { textAlign: 'center', color: '#4f46e5', fontSize: 14 },
+  switchText: { textAlign: 'center', fontSize: 14 },
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 24 },
-  line: { flex: 1, height: 1, backgroundColor: '#ddd' },
-  orText: { marginHorizontal: 12, color: '#999' },
-  guestButton: { borderWidth: 1, borderColor: '#4f46e5', borderRadius: 12, padding: 16, alignItems: 'center' },
-  guestButtonText: { color: '#4f46e5', fontSize: 16, fontWeight: '600' },
+  line: { flex: 1, height: 1 },
+  orText: { marginHorizontal: 12 },
+  guestButton: { borderWidth: 1, borderRadius: 12, padding: 16, alignItems: 'center' },
+  guestButtonText: { fontSize: 16, fontWeight: '600' },
 })

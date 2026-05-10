@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { ActivityIndicator, View, StyleSheet } from 'react-native'
 
 import { AuthProvider, useAuth } from './src/context/AuthContext'
+import { ThemeProvider, useTheme } from './src/context/ThemeContext'
 import LoginScreen from './src/screens/LoginScreen'
 import HomeScreen from './src/screens/HomeScreen'
 import QueueDetailScreen from './src/screens/QueueDetailScreen'
@@ -18,13 +19,16 @@ const Stack = createNativeStackNavigator()
 
 function Navigation() {
   const { loading } = useAuth()
+  const { theme } = useTheme()
+
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: theme.bg }]}>
         <ActivityIndicator size="large" color="#4f46e5" />
       </View>
     )
   }
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
@@ -41,11 +45,13 @@ function Navigation() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <Navigation />
-      </NavigationContainer>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <NavigationContainer>
+          <Navigation />
+        </NavigationContainer>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 
