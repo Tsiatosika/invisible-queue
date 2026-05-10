@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import {
   View, Text, FlatList, TouchableOpacity,
-  StyleSheet, ActivityIndicator, RefreshControl
+  StyleSheet, ActivityIndicator, RefreshControl,
+  TextInput
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../context/AuthContext'
@@ -12,6 +13,8 @@ export default function HomeScreen({ navigation }) {
   const { user, signOut } = useAuth()
   const [queues, setQueues] = useState([])
   const [fetching, setFetching] = useState(true)
+  const [search, setSearch] = useState('')
+  const [searchFocused, setSearchFocused] = useState(false)
 
   useEffect(() => { loadQueues() }, [])
 
@@ -25,10 +28,20 @@ export default function HomeScreen({ navigation }) {
     setFetching(false)
   }
 
+  // Filtre en temps réel selon la recherche
+  const filteredQueues = useMemo(() => {
+    if (!search.trim()) return queues
+    return queues.filter(q =>
+      q.name.toLowerCase().includes(search.toLowerCase().trim())
+    )
+  }, [queues, search])
+
   const handleSignOut = async () => {
     await signOut()
     navigation.reset({ index: 0, routes: [{ name: 'Login' }] })
   }
+
+  const clearSearch = () => setSearch('')
 
   if (fetching) {
     return (
@@ -41,6 +54,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -64,17 +78,40 @@ export default function HomeScreen({ navigation }) {
               <Ionicons name="add" size={24} color="#4f46e5" />
             </TouchableOpacity>
           )}
-          {user ? (
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate("Profile")}>
-              <Ionicons name="person-circle-outline" size={22} color="#4f46e5" />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.loginBtn}
-              onPress={() => navigation.navigate('Login')}
-            >
-              <Ionicons name="log-in-outline" size={16} color="#4f46e5" />
-              <Text style={styles.loginText}> Connexion</Text>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => user
+              ? navigation.navigate('Profile')
+              : navigation.navigate('Login')
+            }
+          >
+            <Ionicons
+              name={user ? 'person-circle-outline' : 'log-in-outline'}
+              size={22} color="#4f46e5"
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Barre de recherche */}
+      <View style={styles.searchContainer}>
+        <View style={[
+          styles.searchBar,
+          searchFocused && styles.searchBarFocused
+        ]}>
+          <Ionicons name="search-outline" size={18} color="#999" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Rechercher une file..."
+            placeholderTextColor="#bbb"
+            value={search}
+            onChangeText={setSearch}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={clearSearch}>
+              <Ionicons name="close-circle" size={18} color="#bbb" />
             </TouchableOpacity>
           )}
         </View>
@@ -84,13 +121,17 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.countBar}>
         <Ionicons name="list-outline" size={14} color="#4f46e5" />
         <Text style={styles.countText}>
-          {' '}{queues.length} file{queues.length !== 1 ? 's' : ''} disponible{queues.length !== 1 ? 's' : ''}
+          {' '}
+          {search.trim()
+            ? `${filteredQueues.length} résultat${filteredQueues.length !== 1 ? 's' : ''} pour "${search}"`
+            : `${queues.length} file${queues.length !== 1 ? 's' : ''} disponible${queues.length !== 1 ? 's' : ''}`
+          }
         </Text>
       </View>
 
       {/* Liste */}
       <FlatList
-        data={queues}
+        data={filteredQueues}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <QueueCard
@@ -106,17 +147,33 @@ export default function HomeScreen({ navigation }) {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="location-outline" size={64} color="#c7d2fe" />
-            <Text style={styles.emptyTitle}>Aucune file disponible</Text>
-            <Text style={styles.emptyText}>
-              Aucune file d'attente n'est disponible pour le moment.
-            </Text>
+            {search.trim() ? (
+              <>
+                <Ionicons name="search-outline" size={64} color="#c7d2fe" />
+                <Text style={styles.emptyTitle}>Aucun résultat</Text>
+                <Text style={styles.emptyText}>
+                  Aucune file ne correspond à "{search}"
+                </Text>
+                <TouchableOpacity style={styles.clearBtn} onPress={clearSearch}>
+                  <Text style={styles.clearBtnText}>Effacer la recherche</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Ionicons name="location-outline" size={64} color="#c7d2fe" />
+                <Text style={styles.emptyTitle}>Aucune file disponible</Text>
+                <Text style={styles.emptyText}>
+                  Aucune file d'attente n'est disponible pour le moment.
+                </Text>
+              </>
+            )}
           </View>
         }
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl refreshing={fetching} onRefresh={loadQueues} />
         }
+        keyboardShouldPersistTaps="handled"
       />
     </View>
   )
@@ -126,6 +183,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 12, color: '#666', fontSize: 14 },
+
+  // Header
   header: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', padding: 20, paddingTop: 40,
@@ -140,20 +199,51 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: 19,
     justifyContent: 'center', alignItems: 'center',
   },
-  loginBtn: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#fff', borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 8,
+
+  // Recherche
+  searchContainer: {
+    backgroundColor: '#4f46e5',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
-  loginText: { color: '#4f46e5', fontSize: 13, fontWeight: '600' },
+  searchBar: {
+  flexDirection: 'row', alignItems: 'center',
+  backgroundColor: '#fff',
+  borderRadius: 12, paddingHorizontal: 12,
+  paddingVertical: 10, gap: 8,
+},
+searchBarFocused: {
+  shadowColor: '#4f46e5',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.2, shadowRadius: 4,
+},
+  searchInput: {
+    flex: 1, fontSize: 15,
+    color: '#1a1a2e', padding: 0,
+  },
+
+  // Compteur
   countBar: {
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ede9fe', padding: 10,
   },
   countText: { color: '#4f46e5', fontWeight: '600', fontSize: 13 },
+
+  // Liste
   list: { padding: 16, paddingBottom: 40 },
   empty: { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1a1a2e', marginTop: 16 },
-  emptyText: { fontSize: 14, color: '#999', textAlign: 'center', marginTop: 8, lineHeight: 20 },
+  emptyTitle: {
+    fontSize: 18, fontWeight: '700',
+    color: '#1a1a2e', marginTop: 16, marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 14, color: '#999',
+    textAlign: 'center', lineHeight: 20,
+  },
+  clearBtn: {
+    marginTop: 16, backgroundColor: '#4f46e5',
+    borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10,
+  },
+  clearBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
 })
