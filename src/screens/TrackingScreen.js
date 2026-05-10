@@ -204,18 +204,6 @@ export default function TrackingScreen({ route, navigation }) {
         <Text style={styles.liveText}>Mise à jour en temps réel</Text>
       </View>
 
-      {/* Bouton test */}
-      <TouchableOpacity
-        style={styles.testBtn}
-        onPress={() => showNotification({
-          type: 'near',
-          message: 'Plus que 2 personnes avant vous !'
-        })}
-      >
-        <Ionicons name="notifications-outline" size={16} color="#4f46e5" />
-        <Text style={styles.testBtnText}> Tester la notification</Text>
-      </TouchableOpacity>
-
       {/* Bouton quitter */}
       <TouchableOpacity
         style={[styles.leaveBtn, loading && styles.leaveBtnDisabled]}
@@ -311,15 +299,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#22c55e', marginRight: 6,
   },
   liveText: { color: '#22c55e', fontSize: 13, fontWeight: '600' },
-  testBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    marginHorizontal: 16, marginTop: 16,
-    backgroundColor: '#ede9fe', borderRadius: 12, padding: 14,
-  },
-  testBtnText: { color: '#4f46e5', fontWeight: '600', fontSize: 14 },
   leaveBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    margin: 16, marginTop: 12, borderWidth: 2,
+    margin: 16, marginTop: 24, borderWidth: 2,
     borderColor: '#ef4444', borderRadius: 16, padding: 16,
   },
   leaveBtnDisabled: { opacity: 0.5 },
