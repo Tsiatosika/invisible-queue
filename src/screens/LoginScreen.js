@@ -15,7 +15,7 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (user) navigation.reset({ index: 0, routes: [{ name: 'Home' }] })
+    if (user) navigation.reset({ index: 0, routes: [{ name: 'Main' }] })
   }, [user])
 
   const handleSubmit = async () => {
@@ -96,7 +96,7 @@ export default function LoginScreen({ navigation }) {
 
       <TouchableOpacity
         style={[styles.guestButton, { borderColor: theme.countText }]}
-        onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
+        onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Main' }] })}
       >
         <Text style={[styles.guestButtonText, { color: theme.countText }]}>
           Continuer en tant qu'invité

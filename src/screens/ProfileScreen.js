@@ -114,7 +114,7 @@ export default function ProfileScreen({ navigation }) {
 
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.header }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => navigation.navigate("Home")} style={styles.backBtn}>
           <Ionicons name="arrow-back-outline" size={20} color={theme.headerSub} />
           <Text style={[styles.backText, { color: theme.headerSub }]}> Retour</Text>
         </TouchableOpacity>

@@ -10,7 +10,7 @@ import QueueCard from '../components/QueueCard'
 import { supabase } from '../../lib/supabase'
 
 export default function HomeScreen({ navigation }) {
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const { theme, isDark, toggleTheme } = useTheme()
   const [queues, setQueues] = useState([])
   const [fetching, setFetching] = useState(true)
@@ -47,34 +47,31 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
 
-      {/* Header */}
+      {/* Header simplifié */}
       <View style={[styles.header, { backgroundColor: theme.header }]}>
         <View>
           <Text style={[styles.title, { color: theme.headerText }]}>Invisible Queue</Text>
           <View style={styles.userRow}>
-            <Ionicons name={user ? 'person-circle-outline' : 'person-outline'} size={14} color={theme.headerSub} />
+            <Ionicons
+              name={user ? 'person-circle-outline' : 'person-outline'}
+              size={14} color={theme.headerSub}
+            />
             <Text style={[styles.subtitle, { color: theme.headerSub }]}>
               {' '}{user ? user.email : 'Mode invité'}
             </Text>
           </View>
         </View>
-        <View style={styles.headerButtons}>
-          {/* Toggle dark mode */}
-          <TouchableOpacity style={[styles.iconBtn, { backgroundColor: theme.iconBg }]} onPress={toggleTheme}>
-            <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={20} color={theme.iconColor} />
-          </TouchableOpacity>
-          {user && (
-            <TouchableOpacity style={[styles.iconBtn, { backgroundColor: theme.iconBg }]} onPress={() => navigation.navigate('CreateQueue')}>
-              <Ionicons name="add" size={24} color={theme.iconColor} />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={[styles.iconBtn, { backgroundColor: theme.iconBg }]}
-            onPress={() => user ? navigation.navigate('Profile') : navigation.navigate('Login')}
-          >
-            <Ionicons name={user ? 'person-circle-outline' : 'log-in-outline'} size={22} color={theme.iconColor} />
-          </TouchableOpacity>
-        </View>
+
+        {/* Bouton dark mode uniquement */}
+        <TouchableOpacity
+          style={[styles.iconBtn, { backgroundColor: theme.iconBg }]}
+          onPress={toggleTheme}
+        >
+          <Ionicons
+            name={isDark ? 'sunny-outline' : 'moon-outline'}
+            size={20} color={theme.iconColor}
+          />
+        </TouchableOpacity>
       </View>
 
       {/* Recherche */}
@@ -149,7 +146,9 @@ export default function HomeScreen({ navigation }) {
           </View>
         }
         contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={fetching} onRefresh={loadQueues} />}
+        refreshControl={
+          <RefreshControl refreshing={fetching} onRefresh={loadQueues} />
+        }
         keyboardShouldPersistTaps="handled"
       />
     </View>
@@ -167,7 +166,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: 'bold' },
   userRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
   subtitle: { fontSize: 12 },
-  headerButtons: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   iconBtn: {
     width: 38, height: 38, borderRadius: 19,
     justifyContent: 'center', alignItems: 'center',
@@ -179,12 +177,18 @@ const styles = StyleSheet.create({
     paddingVertical: 10, gap: 8,
   },
   searchInput: { flex: 1, fontSize: 15, padding: 0 },
-  countBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10 },
+  countBar: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', padding: 10,
+  },
   countText: { fontWeight: '600', fontSize: 13 },
   list: { padding: 16, paddingBottom: 40 },
   empty: { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
   emptyTitle: { fontSize: 18, fontWeight: '700', marginTop: 16, marginBottom: 8 },
   emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
-  clearBtn: { marginTop: 16, backgroundColor: '#4f46e5', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10 },
+  clearBtn: {
+    marginTop: 16, backgroundColor: '#4f46e5',
+    borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10,
+  },
   clearBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
 })
