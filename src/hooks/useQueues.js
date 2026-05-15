@@ -9,7 +9,6 @@ export function useQueues() {
   useEffect(() => {
     fetchQueues()
 
-    // Nettoie l'ancien canal s'il existe
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current)
       channelRef.current = null

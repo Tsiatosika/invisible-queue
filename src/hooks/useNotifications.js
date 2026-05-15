@@ -38,7 +38,6 @@ export function useNotifications(entryId, queueId, onNotify) {
   }, [entryId, queueId])
 
   const checkPosition = async () => {
-    // Récupère ma position actuelle
     const { data: myEntry } = await supabase
       .from('queue_entries')
       .select('position, status')
@@ -48,7 +47,6 @@ export function useNotifications(entryId, queueId, onNotify) {
     if (!myEntry) return
     if (myEntry.status !== 'waiting') return
 
-    // Compte les personnes devant moi
     const { count } = await supabase
       .from('queue_entries')
       .select('*', { count: 'exact', head: true })
@@ -58,11 +56,9 @@ export function useNotifications(entryId, queueId, onNotify) {
 
     const ahead = count ?? 0
 
-    // Évite les notifications en double si la position n'a pas changé
     if (prevAheadRef.current === ahead) return
     prevAheadRef.current = ahead
 
-    // C'est mon tour (0 personnes devant)
     if (ahead === 0 && !notifiedRef.current.next) {
       notifiedRef.current.next = true
       notifiedRef.current.near = true
@@ -73,7 +69,6 @@ export function useNotifications(entryId, queueId, onNotify) {
       return
     }
 
-    // Bientôt mon tour (3 personnes ou moins devant)
     if (ahead > 0 && ahead <= 3 && !notifiedRef.current.near) {
       notifiedRef.current.near = true
       onNotify({

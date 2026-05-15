@@ -126,7 +126,6 @@ export default function LoginScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoBox}>
           <Ionicons name="list" size={36} color="#fff" />
@@ -137,7 +136,6 @@ export default function LoginScreen({ navigation }) {
         </Text>
       </View>
 
-      {/* Formulaire */}
       <View style={styles.form}>
 
         {/* Email */}
@@ -177,7 +175,6 @@ export default function LoginScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Message d'erreur avec animation */}
         {error ? (
           <Animated.View
             style={[styles.errorBox, { transform: [{ translateX: errorAnim }] }]}
@@ -208,7 +205,6 @@ export default function LoginScreen({ navigation }) {
           )}
         </TouchableOpacity>
 
-        {/* Switch mode */}
         <TouchableOpacity style={styles.switchBtn} onPress={switchMode}>
           <Text style={styles.switchText}>
             {isLogin ? "Pas encore de compte ? " : 'Déjà un compte ? '}
@@ -218,14 +214,12 @@ export default function LoginScreen({ navigation }) {
           </Text>
         </TouchableOpacity>
 
-        {/* Divider */}
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
           <Text style={styles.dividerText}>OU</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        {/* Mode invité */}
         <TouchableOpacity
           style={styles.guestBtn}
           onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Main' }] })}

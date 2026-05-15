@@ -47,7 +47,6 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
 
-      {/* Header simplifié */}
       <View style={[styles.header, { backgroundColor: theme.header }]}>
         <View>
           <Text style={[styles.title, { color: theme.headerText }]}>Invisible Queue</Text>
@@ -62,7 +61,6 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Bouton dark mode uniquement */}
         <TouchableOpacity
           style={[styles.iconBtn, { backgroundColor: theme.iconBg }]}
           onPress={toggleTheme}
@@ -74,7 +72,6 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Recherche */}
       <View style={[styles.searchContainer, { backgroundColor: theme.header }]}>
         <View style={[styles.searchBar, { backgroundColor: theme.card }]}>
           <Ionicons name="search-outline" size={18} color={theme.placeholder} />

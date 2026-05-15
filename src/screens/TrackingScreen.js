@@ -103,7 +103,6 @@ export default function TrackingScreen({ route, navigation }) {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
 
-      {/* Notification banner */}
       {notification && (
         <Animated.View style={[
           styles.notifBanner,
@@ -120,7 +119,6 @@ export default function TrackingScreen({ route, navigation }) {
         </Animated.View>
       )}
 
-      {/* Modal confirmation */}
       <Modal visible={showConfirm} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, { backgroundColor: theme.card }]}>
@@ -144,7 +142,6 @@ export default function TrackingScreen({ route, navigation }) {
         </View>
       </Modal>
 
-      {/* Header avec bouton retour */}
       <View style={[styles.header, { backgroundColor: theme.header }]}>
         <TouchableOpacity
           style={styles.backBtn}
@@ -158,16 +155,13 @@ export default function TrackingScreen({ route, navigation }) {
           <Text style={[styles.headerTitle, { color: theme.headerText }]}>Suivi de file</Text>
           <Text style={[styles.headerSubtitle, { color: theme.headerSub }]}>{queue.name}</Text>
         </View>
-        {/* Espace pour équilibrer le header */}
         <View style={styles.headerRight} />
       </View>
 
-      {/* Contenu scrollable */}
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Position */}
         <View style={[styles.positionCard, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
           <Text style={[styles.positionLabel, { color: theme.subtext }]}>Votre position</Text>
           <Text style={[styles.positionValue, { color: '#4f46e5' }]}>#{entry?.position ?? '—'}</Text>
@@ -186,7 +180,6 @@ export default function TrackingScreen({ route, navigation }) {
           )}
         </View>
 
-        {/* Infos */}
         <View style={[styles.infoCard, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
           <View style={[styles.infoRow, { borderBottomColor: theme.separator }]}>
             <View style={styles.infoLeft}>
@@ -215,13 +208,11 @@ export default function TrackingScreen({ route, navigation }) {
           </View>
         </View>
 
-        {/* Live indicator */}
         <View style={styles.liveIndicator}>
           <View style={styles.liveDot} />
           <Text style={styles.liveText}>Mise à jour en temps réel</Text>
         </View>
 
-        {/* Bouton quitter */}
         <TouchableOpacity
           style={[styles.leaveBtn, loading && styles.leaveBtnDisabled]}
           onPress={() => setShowConfirm(true)}
@@ -237,7 +228,6 @@ export default function TrackingScreen({ route, navigation }) {
           )}
         </TouchableOpacity>
 
-        {/* Info recul */}
         <View style={[styles.warningBox, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Ionicons name="information-circle-outline" size={18} color={theme.subtext} />
           <Text style={[styles.warningText, { color: theme.subtext }]}>

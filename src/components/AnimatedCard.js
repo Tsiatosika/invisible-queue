@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 import { Animated, TouchableOpacity } from 'react-native'
 
-// Carte avec animation d'entrée fade + slide
 export function FadeInCard({ children, delay = 0, style }) {
   const opacity = useRef(new Animated.Value(0)).current
   const translateY = useRef(new Animated.Value(24)).current
@@ -30,7 +29,6 @@ export function FadeInCard({ children, delay = 0, style }) {
   )
 }
 
-// Bouton avec animation de pression
 export function AnimatedButton({ onPress, style, children, disabled }) {
   const scale = useRef(new Animated.Value(1)).current
 
@@ -66,7 +64,6 @@ export function AnimatedButton({ onPress, style, children, disabled }) {
   )
 }
 
-// Animation de pulse
 export function PulseView({ style, children }) {
   const scale = useRef(new Animated.Value(1)).current
 
