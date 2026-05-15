@@ -1,5 +1,5 @@
 import 'react-native-url-polyfill/auto'
-import React from 'react'
+import React, { useState } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { AuthProvider, useAuth } from './src/context/AuthContext'
 import { ThemeProvider, useTheme } from './src/context/ThemeContext'
 
+import SplashScreen from './src/screens/SplashScreen'
 import LoginScreen from './src/screens/LoginScreen'
 import HomeScreen from './src/screens/HomeScreen'
 import QueueDetailScreen from './src/screens/QueueDetailScreen'
@@ -21,7 +22,6 @@ import NotFoundScreen from './src/screens/NotFoundScreen'
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
 
-// Stack pour l'onglet Home
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -33,7 +33,6 @@ function HomeStack() {
   )
 }
 
-// Stack pour l'onglet Créer
 function CreateStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -42,7 +41,6 @@ function CreateStack() {
   )
 }
 
-// Stack pour l'onglet Profil
 function ProfileStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -52,10 +50,9 @@ function ProfileStack() {
   )
 }
 
-// Tabs principaux
 function MainTabs() {
   const { user } = useAuth()
-  const { theme, isDark } = useTheme()
+  const { theme } = useTheme()
 
   return (
     <Tab.Navigator
@@ -71,20 +68,12 @@ function MainTabs() {
           paddingTop: 6,
           height: 64,
         },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginTop: 2,
-        },
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
+        tabBarIcon: ({ focused, color }) => {
           let iconName
-          if (route.name === 'Home') {
-            iconName = focused ? 'list' : 'list-outline'
-          } else if (route.name === 'Create') {
-            iconName = focused ? 'add-circle' : 'add-circle-outline'
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'person-circle' : 'person-circle-outline'
-          }
+          if (route.name === 'Home') iconName = focused ? 'list' : 'list-outline'
+          else if (route.name === 'Create') iconName = focused ? 'add-circle' : 'add-circle-outline'
+          else if (route.name === 'Profile') iconName = focused ? 'person-circle' : 'person-circle-outline'
           return <Ionicons name={iconName} size={24} color={color} />
         },
       })}
@@ -112,8 +101,7 @@ function MainTabs() {
                 ? (focused ? 'person-circle' : 'person-circle-outline')
                 : (focused ? 'log-in' : 'log-in-outline')
               }
-              size={24}
-              color={color}
+              size={24} color={color}
             />
           )
         }}
@@ -122,7 +110,6 @@ function MainTabs() {
   )
 }
 
-// Navigation principale
 function RootNavigator() {
   const { loading } = useAuth()
   const { theme } = useTheme()
@@ -145,12 +132,18 @@ function RootNavigator() {
 }
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true)
+
   return (
     <ThemeProvider>
       <AuthProvider>
         <NavigationContainer>
           <RootNavigator />
         </NavigationContainer>
+        {/* Splash screen par dessus tout */}
+        {showSplash && (
+          <SplashScreen onFinish={() => setShowSplash(false)} />
+        )}
       </AuthProvider>
     </ThemeProvider>
   )

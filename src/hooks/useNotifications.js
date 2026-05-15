@@ -9,7 +9,6 @@ export function useNotifications(entryId, queueId, onNotify) {
   useEffect(() => {
     if (!entryId || !queueId) return
 
-    // Vérifie la position immédiatement au montage
     checkPosition()
 
     if (channelRef.current) {
@@ -24,7 +23,6 @@ export function useNotifications(entryId, queueId, onNotify) {
         schema: 'public',
         table: 'queue_entries',
       }, () => {
-        // Déclenche la vérification à chaque changement dans la table
         checkPosition()
       })
       .subscribe()

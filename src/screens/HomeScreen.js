@@ -108,8 +108,8 @@ export default function HomeScreen({ navigation }) {
       <FlatList
         data={filteredQueues}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <QueueCard
+        renderItem={({ item, index }) => (
+          <QueueCard index={index}
             queue={item}
             distance={0}
             theme={theme}
